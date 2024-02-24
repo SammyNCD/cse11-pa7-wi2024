@@ -11,5 +11,16 @@ class FileHelper {
         }
     }
 }
+interface Query{
+    boolean Matches(String s);
+}
 class StringSearch{
+    public static void main(String[] args) {
+        if (args.length == 1) {
+            String[] lines = FileHelper.getLines(args[0]);
+            for (String line: lines) {
+                System.out.println(line);
+            }
+        }
+    }
 }

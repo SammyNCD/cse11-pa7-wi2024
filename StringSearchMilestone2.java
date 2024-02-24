@@ -29,7 +29,6 @@ class StringSearch{
             for (String line: lines) {
                 System.out.println(line);
             }
-            // contains=<string> which matches lines containing the <string> (case-sensitive)
         } else if (args.length == 2) {
             String[] lines = FileHelper.getLines(args[0]);
             ContainsQuery query = new ContainsQuery(args[1]);
