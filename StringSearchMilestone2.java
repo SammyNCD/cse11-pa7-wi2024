@@ -11,5 +11,33 @@ class FileHelper {
         }
     }
 }
+class ContainsQuery{
+    String str;
+
+    ContainsQuery(String str) {
+        this.str = str.substring(str.indexOf("'") + 1, str.lastIndexOf("'"));
+    }
+    boolean matches(String s) {
+        return s.contains(this.str);
+    }
+
+}
 class StringSearch{
+    public static void main(String[] args) {
+        if (args.length == 1) {
+            String[] lines = FileHelper.getLines(args[0]);
+            for (String line: lines) {
+                System.out.println(line);
+            }
+            // contains=<string> which matches lines containing the <string> (case-sensitive)
+        } else if (args.length == 2) {
+            String[] lines = FileHelper.getLines(args[0]);
+            ContainsQuery query = new ContainsQuery(args[1]);
+            for (String line : lines) {
+                if (query.matches(line)) {
+                    System.out.println(line);
+                }
+            }
+        }
+    }
 }
