@@ -12,4 +12,10 @@ class FileHelper {
     }
 }
 class StringSearch{
+    public static void main(String[] args) {
+        String[] lines = FileHelper.getLines(args[0]);
+        for (String line: lines) {
+            System.out.println(line);
+        }
+    }
 }
