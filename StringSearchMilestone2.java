@@ -20,7 +20,7 @@ class ContainsQuery{
     boolean matches(String s) {
         return s.contains(this.str);
     }
-
+    
 }
 class StringSearch{
     public static void main(String[] args) {
