@@ -78,9 +78,8 @@ class Ends implements Query {
     }
 
     public boolean matches(String s) {
-        int checkIndex = s.indexOf(s.length()-1);
         String[] words = s.split(" ");
-        return words[checkIndex].equals(end);
+        return words[words.length -1].equals(end);
     }
 }
 
@@ -160,19 +159,34 @@ class Replace implements Transform {
 class StringSearch{
 
     static Query readQuery(String q) {
-        String[] queryParts = q.split("=");
-        if (queryParts.length < 2) {
+
+        String query = "";
+        String value = "";
+
+        if (q.contains("=") != true) {
+            query += q;
+        } else if (q.contains("=") == true) {
+            String[] queryParts = q.split("=");
+            query += queryParts[0].trim(); // for queries w/ no = can do if elif else where these are created in those statements
+            value += queryParts[1].trim();
+        } else {
             System.out.println("Invalid query, please try again");
         }
 
-        String query = queryParts[0].trim(); // for queries w/ no = can do if elif else where these are created in those statements
-        String value = queryParts[1].trim();
-
         switch (query) {
-            case "Starts":
+            case "starts":
                 return new Starts(value);
-            case "Contains":
+            case "contains":
                 return new ContainsQuery(value);
+            case "length":
+                return new Length(value);
+            case "greater":
+                return new Greater(value);
+            case "less":
+                return new Less(value);
+            case "ends":
+                return new Ends(value);
+            case "not":
             default:
                 System.out.println("Unsupported query type: " + query);
                 return null;
@@ -180,19 +194,31 @@ class StringSearch{
     }
 
     static Transform readTransform(String t) {
-        String[] transformParts = t.split("=");
-        if (transformParts.length < 2) {
+
+        String transform = "";
+        String value = "";
+
+        if (t.contains("=") != true) {
+            transform += t;
+        } else if (t.contains("=") == true) {
+            String[] transformParts = t.split("=");
+            transform += transformParts[0].trim(); // for queries w/ no = can do if elif else where these are created in those statements
+            value += transformParts[1].trim();
+        } else {
             System.out.println("Invalid query, please try again");
         }
 
-        String transform = transformParts[0].trim(); // for queries w/ no = can do if elif else where these are created in those statements
-        String value = transformParts[1].trim();
-
         switch (transform) {
-            case "First":
+            case "upper":
+                return new Upper();
+            case "lower":
+                return new Lower();
+            case "first":
                 return new First(value);
-            case "Replace":
-                String[] vals = transformParts[1].split(";");
+            case "last":                // "First" and "Last" need to be fixed, last/first characters
+                return new Last(value); // not last/first words
+            case "replace":
+                String[] vals = value.split(";");
                 return new Replace(vals[0], vals[1]);
             default:
                 System.out.println("Unsupported transform type: " + transform);
@@ -200,10 +226,26 @@ class StringSearch{
         }
     }
 
+    static boolean matchesAll(Query[] qs, String s) {
+        for (Query query : qs) {
+            if (!query.matches(s)) {
+                return false;
+            }
+        }
+        return true; 
+    }
+
+    static String applyAll(Transform[] ts, String s) {
+        for (Transform t : ts) {
+            s = t.transform(s);
+        }
+        return s;
+    }
+
     public static void main(String[] args) {
         if (args.length == 1) {
             String[] lines = FileHelper.getLines(args[0]);
-            for (String line: lines) {
+            for (String line : lines) {
                 System.out.println(line);
             }
         } else if (args.length == 2) {
@@ -215,18 +257,32 @@ class StringSearch{
                     System.out.println(line);
                 }
             }
-        } else {
+        } else if (args.length == 3) {
             String[] lines = FileHelper.getLines(args[0]);
-            String query = args[1];
+            String queries = args[1];
+            String[] queryStringList = queries.split("&");
+            Query[] queryList = new Query[queryStringList.length];
+            int index = 0;
+            for (String s : queryStringList) {
+                Query q = StringSearch.readQuery(s);
+                queryList[index++] = q;
+            }
             String transform = args[2];
-            Query q1 = StringSearch.readQuery(query);
-            Transform t1 = StringSearch.readTransform(transform);
+            String[] transformStringList = transform.split("&");
+            Transform[] transformList = new Transform[transformStringList.length];
+            int transformIndex = 0;
+            for (String s : transformStringList) {
+                Transform t = StringSearch.readTransform(s);
+                transformList[transformIndex++] = t;
+            }
             for (String line : lines) {
-                if (q1.matches(line)) {
-                    String output = t1.transform(line);
+                if (StringSearch.matchesAll(queryList, line)) {
+                    String output = StringSearch.applyAll(transformList, line);
                     System.out.println(output);
                 }
             }
+        } else {
+            System.out.println("Invalid number of arguments.");
         }
     }
 }
