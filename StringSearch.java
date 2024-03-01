@@ -1,5 +1,8 @@
 import java.nio.file.*;
 import java.io.IOException;
+import java.io.StringBufferInputStream;
+
+
 class FileHelper {
     static String[] getLines(String path) {
         try {
@@ -18,7 +21,7 @@ interface Query{
 class Length implements Query {
     String num;
     Length(String num){
-        this.num = num.substring(num.indexOf("'") + 1, num.lastIndexOf("'"));
+        this.num = num;
     }
 
     public boolean matches(String s) {
@@ -29,7 +32,7 @@ class Length implements Query {
 class Greater implements Query {
     String num;
     Greater(String num){
-        this.num = num.substring(num.indexOf("'") + 1, num.lastIndexOf("'"));
+        this.num = num;
     }
 
     public boolean matches(String s) {
@@ -40,7 +43,7 @@ class Greater implements Query {
 class Less implements Query {
     String num;
     Less(String num){
-        this.num = num.substring(num.indexOf("'") + 1, num.lastIndexOf("'"));
+        this.num = num;
     }
 
     public boolean matches(String s) {
@@ -78,19 +81,19 @@ class Ends implements Query {
     }
 
     public boolean matches(String s) {
-        String[] words = s.split(" ");
-        return words[words.length -1].equals(end);
+        return s.endsWith(end);
     }
 }
 
 class Not implements Query {
     String str;
     Not(String str) {
-        this.str = str.substring(str.indexOf("(") + 1, str.lastIndexOf(")"));
+        this.str = str;
     }
 
     public boolean matches(String s) {
-        return false;
+        Query q = StringSearch.readQuery(str);
+        return q.matches(s) == false;
     }
 }
 
@@ -114,7 +117,7 @@ class Lower implements Transform {
 class First implements Transform {
     String num;
     First(String num) {
-        this.num = num.substring(num.indexOf("'") + 1, num.lastIndexOf("'"));
+        this.num = num;
     }
 
     public String transform(String s) {
@@ -130,7 +133,7 @@ class First implements Transform {
 class Last implements Transform {
     String num;
     Last(String num) {
-        this.num = num.substring(num.indexOf("'") + 1, num.lastIndexOf("'"));
+        this.num = num;
     }
 
     public String transform(String s) {
@@ -138,7 +141,7 @@ class Last implements Transform {
         if (s.length() < val) {
             return s;
         } else {
-            return s.substring(val);
+            return s.substring(s.length() - val, s.length());
         }
     }
 }
@@ -163,8 +166,9 @@ class StringSearch{
         String query = "";
         String value = "";
 
-        if (q.contains("=") != true) {
-            query += q;
+        if (q.contains("=") && q.contains("(")) {
+            query += q.substring(0, q.indexOf("("));
+            value += q.substring(q.indexOf("(") + 1, q.indexOf(")"));
         } else if (q.contains("=") == true) {
             String[] queryParts = q.split("=");
             query += queryParts[0].trim(); // for queries w/ no = can do if elif else where these are created in those statements
@@ -187,6 +191,7 @@ class StringSearch{
             case "ends":
                 return new Ends(value);
             case "not":
+                return new Not(value);
             default:
                 System.out.println("Unsupported query type: " + query);
                 return null;
@@ -250,10 +255,16 @@ class StringSearch{
             }
         } else if (args.length == 2) {
             String[] lines = FileHelper.getLines(args[0]);
-            String query = args[1];
-            Query q1 = StringSearch.readQuery(query);
+            String queries = args[1];
+            String[] queryStringList = queries.split("&");
+            Query[] queryList = new Query[queryStringList.length];
+            int index = 0;
+            for (String s : queryStringList) {
+                Query q = StringSearch.readQuery(s);
+                queryList[index++] = q;
+            }
             for (String line : lines) {
-                if (q1.matches(line)) {
+                if (StringSearch.matchesAll(queryList, line)) {
                     System.out.println(line);
                 }
             }
