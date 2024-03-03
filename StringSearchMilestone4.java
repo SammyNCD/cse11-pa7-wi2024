@@ -27,7 +27,7 @@ class Starts implements Query {
     }
 
     public boolean matches(String s) {
-        return s.indexOf(this.start) == 0;
+        return s.startsWith(start);
     }
 }
 
@@ -45,7 +45,7 @@ class ContainsQuery implements Query{
 class First implements Transform {
     String num;
     First(String num) {
-        this.num = num.substring(num.indexOf("'") + 1, num.lastIndexOf("'"));
+        this.num = num;
     }
 
     public String transform(String s) {
@@ -96,7 +96,6 @@ class StringSearch{
                 System.out.println("Unsupported query type: " + transform);
                 return null;
         }
-
     }
 
     public static void main(String[] args) {
